@@ -1,70 +1,62 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 
 public class Main {
 
-    static int[][] dy;
-    static int W[][];
-    static int visitAll;
-    static int N, answer;
-    static int INF = Integer.MAX_VALUE;
+    static int[][] weight;
+    static int[][] d;
+    static int n, bit;
+
+    static int solve(int node, int visited, int start){
+        if((visited & (1<<node)) != 0 && node == start)
+            return 0;
+
+        visited |= (1 << node);
+
+        if(d[node][visited] != 0){
+            return d[node][visited];
+        }
+
+        int rtn = 2000000;
+
+        for (int i = 0; i < n; i++) {
+            // 연결
+            if(weight[node][i] != 0 ){
+                // 방문하지 않은 곳
+                if((visited & 1 << i) == 0){
+                    rtn = Math.min(solve(i, visited, start) + weight[node][i], rtn);
+                }
+                // 모든 점을 방문하고 시작점을 방문하는 경우
+                else if(visited == bit-1 && i == start){
+                    rtn = Math.min(solve(i, visited, start) + weight[node][i], rtn);
+                }
+            }
+        }
+
+        return d[node][visited] = rtn;
+
+    }
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(br.readLine());
 
-        N = Integer.parseInt(br.readLine());
+        bit = 1;
 
-        visitAll = (1 << N) - 1;
+        for (int i = 0; i < n; i++) {
+            bit *= 2;
+        }
 
-        dy = new int[N + 1][visitAll + 1];
-        W = new int[N + 1][N + 1];
+        weight = new int[n][n];
+        d = new int[n][bit];
 
-
-        for (int i = 1; i <= N; i++) {
+        for (int i = 0; i < n; i++) {
             StringTokenizer st = new StringTokenizer(br.readLine());
-            for (int j = 1; j <= N; j++) {
-                W[i][j] = Integer.parseInt(st.nextToken());
+            for (int j = 0; j < n; j++) {
+                weight[i][j] = Integer.parseInt(st.nextToken());
             }
         }
 
-        answer = INF;
-        for (int i = 1; i <= N; i++) {
-            for (int j = 1; j <= visitAll; j++) {
-                dy[i][j] = INF;
-            }
-        }
-
-        dy[1][1] = 0;
-        getDP(1, 1);
-        System.out.println(answer);
-    }
-
-    static void getDP(int now, int visited) {
-        if (visited == visitAll) {
-            if (W[now][1] == 0) {
-                return;
-            }
-            answer = Math.min(answer, dy[now][visited] + W[now][1]);
-        }
-
-        //아직 방문할 도시가 남아있는 경우
-        for (int nextCityNum = 1; nextCityNum <= N; nextCityNum++) {
-            int nextCity = (1<<(nextCityNum-1)); //비트를 하나씩 밀어주면서 다음 도시 위치 계산
-            int nextVisited = visited | nextCity;
-            //이미 방문했다면 continue
-            if (visited == nextVisited)
-                continue;
-
-            //다음 도시로가는 길이 없는 경우도 continue
-            if (W[now][nextCityNum] == 0)
-                continue;
-
-            if (dy[nextCityNum][nextVisited] > dy[now][visited] + W[now][nextCityNum]) {
-                dy[nextCityNum][nextVisited] = dy[now][visited] + W[now][nextCityNum];
-                getDP(nextCityNum, nextVisited);
-            }
-        }
+        System.out.println(solve(0, 0, 0));
     }
 }
